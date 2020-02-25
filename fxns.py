@@ -87,6 +87,9 @@ def build_picture(srf, fasta, mot_holder):
                 #drawing line
                 context.move_to(point_x, point_y)
                 context.line_to((len(line)+point_x), point_y)
+                context.set_font_size(7)
+                context.move_to(point_x, point_y-13)
+                context.show_text(header)
                 #adding exon
                 exon = re.findall(r'[A-Z]+', line)
                 #find location of where exon begins, adding point_x as this is the indent
@@ -113,6 +116,7 @@ def build_picture(srf, fasta, mot_holder):
                         old_slice = m_loc + 1
                         #slicing line to begin on index after where last motif ended
                         line1 = line1[(line1.find(mot[x])+1):]
-
                 context.stroke()
-                point_y += 50
+                point_y += 50    
+            else:
+                header = line
