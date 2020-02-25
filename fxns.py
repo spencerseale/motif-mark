@@ -21,12 +21,7 @@ def fasta_converter(IN_FILE):
                         outfile.write(line.strip().replace('u', 't').replace('U', 'T'))
     return OUT_FILE
 
-#fasta_converter("/Users/spencerseale/motif-mark/Figure_1.fasta")
-
-fa = "/Users/spencerseale/motif-mark/Figure_1.fasta_ADJ.fasta"
-
-mot_file = "/Users/spencerseale/motif-mark/Fig_1_motifs.txt"
-
+#mine motifs from input file
 def motif_list(motif):
     with open(motif, "r") as opmot:
         mot_holder = []
@@ -37,7 +32,7 @@ def motif_list(motif):
     return mot_holder
 
 
-#draw motifs
+#draw motifs given their coordinates
 def draw_motif(srf, motif, move_x, move_y, line_x, line_y):
     ctx = cairo.Context(srf)
     ctx.set_line_width(len(motif))
@@ -47,7 +42,7 @@ def draw_motif(srf, motif, move_x, move_y, line_x, line_y):
     ctx.line_to(line_x+(len(motif)/2), line_y)
     ctx.stroke()
 
-#locate motifs in a given sequence
+#create picture of introns, exons, and motifs in a given fasta sequence
 def build_picture(fasta, output, mot_holder):
     with open(fasta, "r") as opfasta:
         print(f"motifs: {mot_holder}")
@@ -73,9 +68,9 @@ def build_picture(fasta, output, mot_holder):
                 for mo in mot_holder:
                     mot = re.findall(mo, line)
                     print(mot)
-                    #print(mo)
                     #old_slice acts to track the positioning on the line when pieces of it get removed
                     #also setting to 1 since python is 0-counting
+                    #sliding by 1 position each time to find overlapping motifs
                     old_slice = 1
                     line1 = line
                     for x in range(len(mot)):
@@ -85,20 +80,6 @@ def build_picture(fasta, output, mot_holder):
                         old_slice = m_loc + 1
                         #slicing line to begin on index after where last motif ended
                         line1 = line1[(line1.find(mot[x])+1):]
-
-
-                    # old_slice = point_x
-                    # line1 = line
-                    # for x in range(len(mot)):
-                    #     m_start = line1.find(mot[x]) + 1 + old_slice
-                    #     #print(m_start)
-                    #     m_stop = m_start + len(mot[x])
-                    #     #print(m_stop)
-                    #     context.rectangle(m_start, point_b-9, m_stop - m_start, 18)
-                    #     #string slicing away the old portion so .find() works, it can only find first occurance
-                    #     old_slice = m_stop
-                    #     #slicing line to begin on index after where last motif ended
-                    #     line1 = line1[m_stop:]
 
                 context.stroke()
                 point_y += 50
