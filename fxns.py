@@ -26,6 +26,7 @@ def motif_list(motif):
     with open(motif, "r") as opmot:
         mot_holder = []
         for line in opmot:
+            #i changed this
             line = line.strip()
             #replacing any uracils for thymines, only want fastas to be U
             mot_holder.append(line.replace('u', 't').replace('U', 'T'))
@@ -102,21 +103,22 @@ def build_picture(srf, fasta, mot_holder):
                     col2 = (0.3 + idx/11)
                     col3 = (0.9 + idx/11)
                     mot = re.findall(mo, line)
-                    print(mot)
-                    #print(mot)
+
+                    #line.find(mo)
                     #old_slice acts to track the positioning on the line when pieces of it get removed
                     #also setting to 1 since python is 0-counting
                     #sliding by 1 position each time to find overlapping motifs
                     old_slice = 1
-                    line1 = line
+                    line1 = line.lower()
+                    #while mo.lower() in line1:
                     for x in range(len(mot)):
-                        m_loc = line1.find(mot[x]) + old_slice
+                        m_loc = line1.find(mot[x].lower()) + old_slice
                         draw_motif(srf, mo, (m_loc+point_x), point_y-9, (m_loc+point_x), point_y+9, col1, col2, col3)
                         #string slicing away the old portion so .find() works, it can only find first occurance
                         old_slice = m_loc + 1
                         #slicing line to begin on index after where last motif ended
-                        line1 = line1[(line1.find(mot[x])+1):]
+                        line1 = line1[(line1.find(mot[x].lower())+1):]
                 context.stroke()
-                point_y += 50    
+                point_y += 50
             else:
                 header = line
