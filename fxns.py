@@ -2,6 +2,12 @@
 
 import re
 import cairo
+import itertools as it
+
+#dict holding possible ambiguities, add as many as you'd like checked
+ambig = {
+    "y" : ["c", "t"]
+}
 
 #line converter for fasta
 def fasta_converter(IN_FILE):
@@ -21,7 +27,7 @@ def fasta_converter(IN_FILE):
                         outfile.write(line.strip().replace('u', 't').replace('U', 'T'))
     return OUT_FILE
 
-#pull motifs from input file
+#pull motifs from input file and create list, turn rna into dna
 def motif_list(motif):
     with open(motif, "r") as opmot:
         mot_holder = []
@@ -32,30 +38,28 @@ def motif_list(motif):
             mot_holder.append(line.replace('u', 't').replace('U', 'T'))
     return mot_holder
 
-#edit motifs in list to replace those with ambiguous characters
-def edit_list(motif_list):
-    edited_list = []
-    for element in motif_list:
-        if "y" in element:
-            new1 = element.replace("y", "c")
-            new2 = element.replace("y", "t")
-            edited_list.append(new1)
-            edited_list.append(new2)
-        elif "Y" in element:
-            new1 = element.replace("Y", "C")
-            new2 = element.replace("Y", "T")
-            edited_list.append(new1)
-            edited_list.append(new2)
+#getting all possible combinations for abmiguities
+def combo_picker(mo, dict):
+    new_list = []
+    for nt in mo:
+        nested_list = []
+        if nt in dict:
+            nested_list.append(dict[nt])
+            new_list.append(nested_list)
         else:
-            edited_list.append(element)
-    return edited_list
+            nested_list.append(list(nt))
+            new_list.append(nested_list)
+    x = list(it.product(*new_list))
+    final_list = []
+    for i in x[0]:
+        final_list.append(i)
+    poss_combo = list(it.product(*final_list))
+    return ["".join(i) for i in poss_combo]
 
 #draw motifs given their coordinates
 def draw_motif(srf, motif, move_x, move_y, line_x, line_y, col1, col2, col3):
     ctx = cairo.Context(srf)
     ctx.set_line_width(len(motif))
-    # ctx.move_to(move_x, move_y)
-    # ctx.line_to(line_x, line_y)
     ctx.move_to(move_x + (len(motif)/2), move_y)
     ctx.line_to(line_x + (len(motif)/2), line_y)
     ctx.set_source_rgb(col1, col2, col3)
@@ -76,7 +80,6 @@ def draw_legend(srf, motif, leg1x, leg1y, leg2x, leg2y, col1, col2, col3):
 #create picture of introns, exons, and motifs in a given fasta sequence
 def build_picture(srf, fasta, mot_holder):
     with open(fasta, "r") as opfasta:
-        #print(f"motifs: {mot_holder}")
         #width then height
         context = cairo.Context(srf)
         context.set_line_width(1)
@@ -96,28 +99,27 @@ def build_picture(srf, fasta, mot_holder):
                 #find location of where exon begins, adding point_x as this is the indent
                 exon_start = line.find(exon[0]) + 1 + point_x
                 #drawing exon as a rectangle
-                context.rectangle(exon_start, point_y-5, len(exon[0]), 10)
+                context.rectangle(exon_start, point_y-10, len(exon[0]), 20)
                 #adding motifs from list
                 for idx, mo in enumerate(mot_holder):
                     col1 = (0.7 + idx/11)
                     col2 = (0.3 + idx/11)
                     col3 = (0.9 + idx/11)
-                    mot = re.findall(mo, line)
-
-                    #line.find(mo)
+                    poss_mot = combo_picker(mo.lower(), ambig)
+                    for x in poss_mot:
+                        mot = re.findall(x, line.lower())
                     #old_slice acts to track the positioning on the line when pieces of it get removed
                     #also setting to 1 since python is 0-counting
                     #sliding by 1 position each time to find overlapping motifs
-                    old_slice = 1
-                    line1 = line.lower()
-                    #while mo.lower() in line1:
-                    for x in range(len(mot)):
-                        m_loc = line1.find(mot[x].lower()) + old_slice
-                        draw_motif(srf, mo, (m_loc+point_x), point_y-9, (m_loc+point_x), point_y+9, col1, col2, col3)
-                        #string slicing away the old portion so .find() works, it can only find first occurance
-                        old_slice = m_loc + 1
-                        #slicing line to begin on index after where last motif ended
-                        line1 = line1[(line1.find(mot[x].lower())+1):]
+                        old_slice = 1
+                        line1 = line.lower()
+                        for x in range(len(mot)):
+                            m_loc = line1.find(mot[x]) + old_slice
+                            draw_motif(srf, mo, (m_loc+point_x), point_y-7, (m_loc+point_x), point_y+7, col1, col2, col3)
+                            #string slicing away the old portion so .find() works, it can only find first occurance
+                            old_slice = m_loc + 1
+                            #slicing line to begin on index after where last motif ended
+                            line1 = line1[(line1.find(mot[x])+1):]
                 context.stroke()
                 point_y += 50
             else:

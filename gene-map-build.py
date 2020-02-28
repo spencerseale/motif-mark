@@ -19,15 +19,11 @@ out_fa = fxns.fasta_converter(in_file)
 #get list of motifs from input motif txt file
 mot_holder = fxns.motif_list(mot_file)
 
-#edit motifs
-edited_holder = fxns.edit_list(mot_holder)
-#print(edited_holder)
-
 #create picture of exons, introns, and motifs
-fxns.build_picture(surface, out_fa, edited_holder)
+fxns.build_picture(surface, out_fa, mot_holder)
 
 locator = 30
-for idx, mo in enumerate(edited_holder):
+for idx, mo in enumerate(mot_holder):
     col1 = (0.7 + idx/11)
     col2 = (0.3 + idx/11)
     col3 = (0.9 + idx/11)
